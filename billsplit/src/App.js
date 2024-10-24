@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './App.css';
 
 function App() {
-  const [numberOfFriends, setNumberOfFriends] = useState(1);
+  const [numberOfFriends, setNumberOfFriends] = useState(2); // Default to 2 friends
   const [tip, setTip] = useState(0);
   const [tax, setTax] = useState(0);
   const [orders, setOrders] = useState([]);
   const [newItem, setNewItem] = useState('');
   const [newCost, setNewCost] = useState('');
-  const [newPerson, setNewPerson] = useState(0);
-  const [perPersonAmounts, setPerPersonAmounts] = useState([]);
+  const [newPerson, setNewPerson] = useState(0); // Default to Friend 1
+  const [perPersonAmounts, setPerPersonAmounts] = useState([]); // Store amount per friend
   const [suggestedMeal, setSuggestedMeal] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -19,7 +19,7 @@ function App() {
       const response = await fetch('https://foodish-api.com/api/');
       const data = await response.json();
       if (data && data.image) {
-        setSuggestedMeal(data.image);
+        setSuggestedMeal(data.image); // Set the random meal suggestion image URL
         setErrorMessage('');
       } else {
         setErrorMessage('Unable to retrieve meal suggestion.');
@@ -33,26 +33,21 @@ function App() {
 
   // Add a new order with manual inputs for item, cost, and person
   const handleAddOrder = () => {
-    const cost = parseFloat(newCost) || 0;  // Ensure cost is a valid number
-    const person = parseInt(newPerson, 10);
-    if (newItem && cost > 0 && !isNaN(person)) {
-      const newOrder = { item: newItem, cost: cost, person: person };
+    const cost = parseFloat(newCost);
+    if (newItem && !isNaN(cost) && cost > 0) {
+      const newOrder = { item: newItem, cost: cost, person: newPerson };
       setOrders([...orders, newOrder]);
 
-      setNewItem('');
-      setNewCost('');
+      setNewItem(''); // Clear input after adding
+      setNewCost(''); // Clear input after adding
     } else {
-      alert('Please enter valid item details and cost.');
+      alert('Please enter a valid item name and cost.');
     }
   };
 
   const handleOrderChange = (index, field, value) => {
     const newOrders = [...orders];
-    if (field === 'cost') {
-      newOrders[index][field] = parseFloat(value) || 0;  // Ensure the cost is a valid number
-    } else {
-      newOrders[index][field] = value;  // For 'person', we just store the index
-    }
+    newOrders[index][field] = value;
     setOrders(newOrders);
   };
 
@@ -63,7 +58,7 @@ function App() {
 
   // Calculate the subtotal before tax and tip (sum of all order costs)
   const calculateSubtotal = () => {
-    return orders.reduce((acc, order) => acc + parseFloat(order.cost || 0), 0);  // Ensure valid costs
+    return orders.reduce((acc, order) => acc + parseFloat(order.cost), 0);
   };
 
   // Calculate the total bill including tax and tip
@@ -74,45 +69,46 @@ function App() {
     return subtotal + tipAmount + taxAmount;
   };
 
-  // Calculate the evenly divided tax and tip per friend
-  const calculateTaxAndTipPerFriend = () => {
-    const subtotal = calculateSubtotal();
-    const totalWithExtras = calculateTotalWithTipAndTax();
-    const extras = totalWithExtras - subtotal;  // Total tax and tip
-    return extras / numberOfFriends;  // Evenly divide tax and tip among friends
-  };
-
-  // Calculate amount per friend: item costs + tax/tip
+  // Calculate the amount for Friend 2 (total bill minus Friend 1's cost, including tax and tip)
   const calculateAmountPerFriend = () => {
     if (orders.length === 0) {
       setErrorMessage('Please add at least one order before calculating.');
       return;
     }
 
-    setErrorMessage('');  // Clear any existing error messages
+    setErrorMessage(''); // Clear any existing error messages
+    
+    // Calculate the total bill with tax and tip
+    const totalWithExtras = calculateTotalWithTipAndTax();
 
-    const totals = Array(numberOfFriends).fill(0);  // Initialize totals for each friend to 0
+    // Initialize totals for Friend 1 and Friend 2
+    const totals = [0, 0]; // totals[0] for Friend 1, totals[1] for Friend 2
 
-    // Add each friend's order cost to their total
+    // Add the cost of orders to Friend 1's total
     orders.forEach((order) => {
-      const personIndex = parseInt(order.person, 10);  // Get the person index
-      if (!isNaN(personIndex) && personIndex < numberOfFriends && order.cost) {
-        totals[personIndex] += parseFloat(order.cost);  // Add order cost to the friend's total
+      if (order.person === 0) {
+        totals[0] += parseFloat(order.cost); // Add Friend 1's orders
       }
     });
 
-    const taxAndTipPerFriend = calculateTaxAndTipPerFriend();  // Calculate tax/tip per friend
+    // Calculate Friend 1's share of tax and tip
+    const subtotal = calculateSubtotal();
+    const friend1TaxAndTip = (totals[0] / subtotal) * (totalWithExtras - subtotal);
 
-    // Add tax and tip per friend to each friend's total
-    const finalTotals = totals.map((total) => total + taxAndTipPerFriend);
-    setPerPersonAmounts(finalTotals);  // Update state with final amounts per person
+    // Update Friend 1's total to include their share of tax and tip
+    totals[0] += friend1TaxAndTip;
+
+    // Assign the remaining amount to Friend 2
+    totals[1] = totalWithExtras - totals[0]; // Friend 2 gets the remainder
+
+    setPerPersonAmounts(totals); // Update state with final amounts per person
   };
 
   // Submit and show suggested meal using the random Foodish API
   const handleSubmit = async () => {
     if (orders.length > 0) {
-      calculateAmountPerFriend();  // Calculate and display the total amount per friend
-      await fetchMealSuggestion();  // Fetch the random meal suggestion after calculation
+      calculateAmountPerFriend(); // Calculate and display the total amount per friend
+      await fetchMealSuggestion(); // Fetch the random meal suggestion after calculation
     } else {
       setErrorMessage('Please add at least one order before calculating.');
     }
@@ -148,14 +144,14 @@ function App() {
           type="number"
           value={numberOfFriends}
           onChange={(e) => setNumberOfFriends(e.target.value)}
-          min="1"
+          min="2"
+          max="2" // Limiting to 2 friends for this logic
         />
       </div>
 
       <div>
         <h3>Subtotal: ${calculateSubtotal().toFixed(2)}</h3>
         <h3>Total with Tax and Tip: ${calculateTotalWithTipAndTax().toFixed(2)}</h3>
-        <h3>Tax and Tip per Friend: ${calculateTaxAndTipPerFriend().toFixed(2)}</h3>
       </div>
 
       <div>
@@ -176,11 +172,8 @@ function App() {
         />
         <label>Assigned to Friend: </label>
         <select value={newPerson} onChange={(e) => setNewPerson(e.target.value)}>
-          {Array.from({ length: numberOfFriends }, (_, i) => (
-            <option key={i} value={i}>
-              Friend {i + 1}
-            </option>
-          ))}
+          <option value="0">Friend 1</option>
+          <option value="1">Friend 2</option>
         </select>
         <button onClick={handleAddOrder}>Add to Order</button>
       </div>
@@ -192,17 +185,7 @@ function App() {
             <div key={index}>
               <label>Item {index + 1}: {order.item} </label>
               <label> Cost: ${order.cost.toFixed(2)} </label>
-              <label> Assigned to Friend: </label>
-              <select
-                value={order.person}
-                onChange={(e) => handleOrderChange(index, 'person', e.target.value)}
-              >
-                {Array.from({ length: numberOfFriends }, (_, i) => (
-                  <option key={i} value={i}>
-                    Friend {i + 1}
-                  </option>
-                ))}
-              </select>
+              <label> Assigned to: {order.person === 0 ? 'Friend 1' : 'Friend 2'} </label>
               <button onClick={() => handleRemoveOrder(index)}>Remove</button>
             </div>
           ))
@@ -218,7 +201,7 @@ function App() {
           <h3>Amount Each Friend Should Pay:</h3>
           {perPersonAmounts.map((amount, index) => (
             <div key={index}>
-              <h4>Friend {index + 1}</h4>
+              <h4>{`Friend ${index + 1}`}</h4>
               <p>Total: ${amount.toFixed(2)}</p>
             </div>
           ))}
@@ -228,7 +211,15 @@ function App() {
       {suggestedMeal && (
         <div>
           <h3>Meal Suggestion for Your Next Meal:</h3>
-          <img src={suggestedMeal} alt="Suggested meal" style={{ width: '300px', height: '200px' }} />
+          <img
+            src={suggestedMeal}
+            alt="Suggested meal"
+            style={{ width: '300px', height: '200px' }}
+            onError={(e) => {
+              e.target.onerror = null; // Prevents infinite loop if error happens again
+              e.target.src = 'default-image-url.jpg'; // Replace with a placeholder image if it fails to load
+            }}
+          />
         </div>
       )}
 
