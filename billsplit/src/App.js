@@ -79,6 +79,13 @@ function App() {
 
   // Calculate amount per friend: item costs + tax/tip
   const calculateAmountPerFriend = () => {
+    if (orders.length === 0) {
+      setErrorMessage('Please add at least one order before calculating.');
+      return;
+    }
+    
+    setErrorMessage(''); // Clear any existing error messages
+    
     const totals = Array(numberOfFriends).fill(0); // Initialize totals for each friend to 0
 
     // Add each friend's order cost to their total
@@ -98,8 +105,12 @@ function App() {
 
   // Submit and show suggested meal using the random Foodish API
   const handleSubmit = async () => {
-    calculateAmountPerFriend(); // Calculate and display the total amount per friend
-    await fetchMealSuggestion(); // Fetch the random meal suggestion after calculation
+    if (orders.length > 0) {
+      calculateAmountPerFriend(); // Calculate and display the total amount per friend
+      await fetchMealSuggestion(); // Fetch the random meal suggestion after calculation
+    } else {
+      setErrorMessage('Please add at least one order before calculating.');
+    }
   };
 
   return (
