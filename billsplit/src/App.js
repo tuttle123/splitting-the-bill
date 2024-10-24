@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
@@ -9,17 +9,17 @@ function App() {
   const [newItem, setNewItem] = useState('');
   const [newCost, setNewCost] = useState('');
   const [newPerson, setNewPerson] = useState(0);
-  const [perPersonAmounts, setPerPersonAmounts] = useState([]); // State to store amount per friend
-  const [suggestedMeal, setSuggestedMeal] = useState(''); // State to store the meal suggestion image
-  const [errorMessage, setErrorMessage] = useState(''); // State for error messages
+  const [perPersonAmounts, setPerPersonAmounts] = useState([]);
+  const [suggestedMeal, setSuggestedMeal] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  // Fetch a random meal suggestion image from the Foodish API using GET /api/
+  // Fetch a random meal suggestion image from the Foodish API
   const fetchMealSuggestion = async () => {
     try {
       const response = await fetch('https://foodish-api.com/api/');
       const data = await response.json();
       if (data && data.image) {
-        setSuggestedMeal(data.image); // Set the random meal suggestion image URL
+        setSuggestedMeal(data.image);
         setErrorMessage('');
       } else {
         setErrorMessage('Unable to retrieve meal suggestion.');
@@ -33,21 +33,26 @@ function App() {
 
   // Add a new order with manual inputs for item, cost, and person
   const handleAddOrder = () => {
-    const cost = parseFloat(newCost);
-    if (newItem && !isNaN(cost) && cost > 0) {
-      const newOrder = { item: newItem, cost: cost, person: newPerson };
+    const cost = parseFloat(newCost) || 0;  // Ensure cost is a valid number
+    const person = parseInt(newPerson, 10);
+    if (newItem && cost > 0 && !isNaN(person)) {
+      const newOrder = { item: newItem, cost: cost, person: person };
       setOrders([...orders, newOrder]);
 
-      setNewItem(''); // Clear input after adding
-      setNewCost(''); // Clear input after adding
+      setNewItem('');
+      setNewCost('');
     } else {
-      alert('Please enter a valid item name and cost.');
+      alert('Please enter valid item details and cost.');
     }
   };
 
   const handleOrderChange = (index, field, value) => {
     const newOrders = [...orders];
-    newOrders[index][field] = value;
+    if (field === 'cost') {
+      newOrders[index][field] = parseFloat(value) || 0;  // Ensure the cost is a valid number
+    } else {
+      newOrders[index][field] = value;  // For 'person', we just store the index
+    }
     setOrders(newOrders);
   };
 
@@ -58,7 +63,7 @@ function App() {
 
   // Calculate the subtotal before tax and tip (sum of all order costs)
   const calculateSubtotal = () => {
-    return orders.reduce((acc, order) => acc + parseFloat(order.cost), 0);
+    return orders.reduce((acc, order) => acc + parseFloat(order.cost || 0), 0);  // Ensure valid costs
   };
 
   // Calculate the total bill including tax and tip
@@ -73,8 +78,8 @@ function App() {
   const calculateTaxAndTipPerFriend = () => {
     const subtotal = calculateSubtotal();
     const totalWithExtras = calculateTotalWithTipAndTax();
-    const extras = totalWithExtras - subtotal; // Total tax and tip
-    return extras / numberOfFriends; // Evenly divide tax and tip among friends
+    const extras = totalWithExtras - subtotal;  // Total tax and tip
+    return extras / numberOfFriends;  // Evenly divide tax and tip among friends
   };
 
   // Calculate amount per friend: item costs + tax/tip
@@ -83,31 +88,31 @@ function App() {
       setErrorMessage('Please add at least one order before calculating.');
       return;
     }
-    
-    setErrorMessage(''); // Clear any existing error messages
-    
-    const totals = Array(numberOfFriends).fill(0); // Initialize totals for each friend to 0
+
+    setErrorMessage('');  // Clear any existing error messages
+
+    const totals = Array(numberOfFriends).fill(0);  // Initialize totals for each friend to 0
 
     // Add each friend's order cost to their total
     orders.forEach((order) => {
-      const personIndex = parseInt(order.person, 10); // Get the person index
+      const personIndex = parseInt(order.person, 10);  // Get the person index
       if (!isNaN(personIndex) && personIndex < numberOfFriends && order.cost) {
-        totals[personIndex] += parseFloat(order.cost); // Add order cost to the friend's total
+        totals[personIndex] += parseFloat(order.cost);  // Add order cost to the friend's total
       }
     });
 
-    const taxAndTipPerFriend = calculateTaxAndTipPerFriend(); // Calculate tax/tip per friend
+    const taxAndTipPerFriend = calculateTaxAndTipPerFriend();  // Calculate tax/tip per friend
 
     // Add tax and tip per friend to each friend's total
     const finalTotals = totals.map((total) => total + taxAndTipPerFriend);
-    setPerPersonAmounts(finalTotals); // Update state with final amounts per person
+    setPerPersonAmounts(finalTotals);  // Update state with final amounts per person
   };
 
   // Submit and show suggested meal using the random Foodish API
   const handleSubmit = async () => {
     if (orders.length > 0) {
-      calculateAmountPerFriend(); // Calculate and display the total amount per friend
-      await fetchMealSuggestion(); // Fetch the random meal suggestion after calculation
+      calculateAmountPerFriend();  // Calculate and display the total amount per friend
+      await fetchMealSuggestion();  // Fetch the random meal suggestion after calculation
     } else {
       setErrorMessage('Please add at least one order before calculating.');
     }

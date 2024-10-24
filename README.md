@@ -1,76 +1,99 @@
 Bill Splitter with Random Meal Suggestion
-This is a simple web application that allows users to split bills among friends, taking into account tip and tax, and suggests a random meal for the next time they eat using the Foodish API. Users can input orders, assign them to friends, calculate the total cost, and see how much each person should pay. After calculating the total, a random food image is displayed as a suggestion for the user's next meal.
+This project is a web application designed to help users split bills among friends while factoring in tax and tip. After the calculation, it suggests a random meal for the next time users eat, using the Foodish API. The app solves the problem of complex bill splitting in group dining scenarios, ensuring that everyone pays their share, including tax and tip. As a fun bonus, it provides a random meal suggestion once the bill is calculated.
 
 Features
-Order Input: Users can input the name and cost of a meal and assign it to a friend.
-Bill Splitting: The app calculates the total bill, including tax and tip, and splits it among all friends.
-Meal Suggestion: After calculating the total bill, the app fetches and displays a random food image using the Foodish API, suggesting a meal for the user's next meal.
-Error Handling: The app ensures valid inputs and handles errors when fetching the meal suggestion.
-Demo
-You can see a random meal suggestion after splitting the bill:
+Bill Splitting: Users can input each order, assign it to a friend, and the app calculates how much each person owes, including tax and tip.
+Random Meal Suggestion: After calculating the bill, a random food image from the Foodish API is displayed as a meal suggestion for the next time.
+Order Management: Users can add, remove, and modify individual orders before calculating the final bill.
+Problem It Solves
+Splitting bills in group dining can be complicated, especially when factoring in taxes and tips. This app automates the process of calculating individual amounts each friend owes. It ensures that the tax and tip are evenly distributed among friends. Additionally, the app adds a fun element by suggesting a random meal after the bill has been calculated, giving users inspiration for their next meal.
 
-Technologies Used
-React: Frontend framework for building the user interface.
-CSS: For styling the components.
-JavaScript: For logic, calculations, and API calls.
-Foodish API: Provides random food images to suggest a meal for the next time users eat.
-How It Works
-Input Orders: Users input the name of an item, its cost, and assign it to one of the friends.
-Calculate Totals: The app calculates the total bill, including the specified tax and tip, and splits it evenly among all friends.
-Meal Suggestion: After the total is calculated, the app fetches a random meal suggestion using the Foodish API and displays it on the screen.
-Installation
-Follow the steps below to get this project running on your local machine:
-
+Instructions for Setting Up and Running the Project
 Prerequisites
-Node.js (v12 or later)
-npm (v6 or later)
-Steps
-Clone the repository:
+To run this project, you need to have Node.js and npm installed.
+
+Node.js: Download and install Node.js
+npm: npm comes with Node.js, but if you need to install or update it, you can follow the instructions on the npm documentation.
+Steps to Set Up the Project
+Clone the Repository
+
+First, clone the repository to your local machine:
 
 bash
 Copy code
-git clone https://github.com/yourusername/bill-splitter-meal-suggestion.git
-cd bill-splitter-meal-suggestion
-Install dependencies:
+git clone https://github.com/yourusername/billsplit.git
+cd billsplit
+Install Dependencies
 
-In the project directory, run:
+Use npm to install the required dependencies in the billsplit folder:
 
 bash
 Copy code
 npm install
-Start the development server:
+This will install all the required dependencies listed in the package.json file.
 
-Run the following command to start the application:
+Run the Application
+
+Start the development server using the following command:
 
 bash
 Copy code
 npm start
-The app should now be running at http://localhost:3000.
+This will launch the application, and you can view it in your browser at http://localhost:3000.
 
-Usage
-Open the app in your browser (usually at http://localhost:3000).
-Enter the number of friends, tax, and tip percentages.
-Add meals by entering the name and cost of each item, and assigning it to one of the friends.
-Press the "Calculate and Suggest Next Meal" button to see the total bill for each friend and a random meal suggestion.
-Enjoy splitting your bill and seeing a fun meal suggestion for next time!
-Example Screenshot
-Here's how the app looks when in use:
+Project Folder Structure
+java
+Copy code
+billsplit/
+├── node_modules/
+├── public/
+├── src/
+│ ├── App.js
+│ ├── App.css
+│ ├── index.js
+├── package.json
+└── README.md
+Technologies Used
+React: A JavaScript library for building user interfaces.
+JavaScript: Used for app logic and calculations.
+HTML/CSS: For building and styling the user interface.
+npm: Used to manage dependencies.
+API Information
+Foodish API
+This project uses the Foodish API to fetch random food images. When users press the "Calculate and Suggest Next Meal" button, the app makes a GET request to the API to retrieve a random meal suggestion in the form of an image.
 
+API Integration
+The API is integrated via the following endpoint:
+bash
+Copy code
+GET https://foodish-api.com/api/
+Upon a successful response, the app extracts the image URL and displays the image on the screen as a suggested meal.
+Here’s how the API is used in the code:
 
-Future Improvements
-Allow users to add specific meal types and fetch related images based on the type.
-Store past calculations and meal suggestions.
-Add user authentication and history of previous bills and meals.
-License
-This project is licensed under the MIT License.
+javascript
+Copy code
+const fetchMealSuggestion = async () => {
+try {
+const response = await fetch('https://foodish-api.com/api/');
+const data = await response.json();
+if (data && data.image) {
+setSuggestedMeal(data.image); // Display the image
+} else {
+setErrorMessage('Unable to retrieve meal suggestion.');
+}
+} catch (error) {
+setErrorMessage('Error fetching meal suggestion');
+}
+};
+The API call is made asynchronously, and error handling is implemented to display messages in case of issues fetching the data.
 
-Contact
-Feel free to reach out if you have any questions or suggestions:
+Credits
+This project includes code generated with the help of OpenAI's ChatGPT. The following aspects were assisted by AI:
 
-Name: [Your Name]
-Email: your.email@example.com
-GitHub: https://github.com/yourusername
-Notes:
-Replace placeholder values like path/to/screenshot.png with actual paths or URLs.
-Update the GitHub repository link, contact details, and license type as per your actual setup.
-This README provides a clear overview of the app, how to install it, and how it works. Let me know if you need any more sections added or modifications!
+React Component Structure: The initial structure of the App.js file was designed with suggestions from ChatGPT, which provided the component setup for managing state and logic.
+Form Handling: AI-generated code was used for form input management and state handling (e.g., handling input for orders, tip, and tax).
+API Integration: The integration of the Foodish API was guided by ChatGPT, including error handling and best practices for API calls.
+Bill Calculation Logic: The logic for calculating the split bill, including dividing tax and tip evenly, was partially generated by AI but was customized to fit the specific needs of this project.
+Validation: Input validation logic to prevent submission of empty forms was suggested by AI, helping ensure the robustness of the app.
+How AI Was Used
+The AI-assisted portions of the code were adapted to fit the requirements of this project. Although the AI helped generate code snippets and logic flow, manual adjustments were made to ensure the application works correctly and handles all edge cases.
